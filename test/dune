@@ -1,0 +1,24 @@
+(library
+  (name test_any)
+  (modules test_any)
+  (libraries webdriver))
+
+(executable
+  (name test_lwt)
+  (modules test_lwt)
+  (libraries test_any webdriver_cohttp-lwt-unix))
+
+(executable
+  (name test_async)
+  (modules test_async)
+  (libraries test_any webdriver_cohttp-async))
+
+(rule
+  (alias test_lwt)
+  (deps a.html b.html)
+  (action (run ./test_lwt.exe)))
+
+(rule
+  (alias test_async)
+  (deps a.html b.html)
+  (action (run ./test_async.exe)))
