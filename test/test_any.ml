@@ -115,9 +115,57 @@ module Make (Webdriver : Webdriver.S) = struct
       return ()
     end
 
+  let source = test "source"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+      let* html = source in
+      let is_html = "<html><head>" in
+      let prefix = String.sub html 0 (String.length is_html) in
+      assert (prefix = is_html) ;
+      return ()
+    end
+
+  let screenshot = test "screenshot"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+      let* png = screenshot () in
+      assert ("PNG" = String.sub png 1 3) ;
+
+      let* elt = find_first `css "h1" in
+      let* png_elt = screenshot ~elt () in
+      assert ("PNG" = String.sub png_elt 1 3) ;
+
+      assert (String.length png > String.length png_elt) ;
+      return ()
+    end
+
+  let exec_js = test "execute javascript"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+
+      let* json = execute "return 42" in
+      assert (json = `Int 42) ;
+
+      let* json =
+        execute_async
+          {| var k = arguments[0];
+             setTimeout(function() { k(666) }, 1000);
+          |}
+      in
+      assert (json = `Int 666) ;
+
+      return ()
+    end
+
   let all =
     [ window_rect
     ; navigation
     ; multiple_windows
+    ; source
+    ; screenshot
+    ; exec_js
     ]
 end
