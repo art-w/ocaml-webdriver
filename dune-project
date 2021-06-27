@@ -11,7 +11,7 @@
 (package
   (name webdriver)
   (synopsis "Remote control interface to web browsers")
-  (depends (ocaml (>= "4.08")) yojson))
+  (depends (ocaml (>= "4.08")) yojson base64))
 
 (package
   (name webdriver_cohttp-lwt-unix)

@@ -241,9 +241,11 @@ module Make (Client : HTTP_CLIENT) = struct
     | Ok x -> Client.return x
     | Error e -> Client.fail e
 
+  let decode_b64 x = Base64.decode_exn (J.string x)
+
   let title = J.string |<< get "/title"
   let source = J.string |<< get "/source"
-  let print = J.string |<< post "/print" `Null
+  let print = decode_b64 |<< post "/print" `Null
 
   let execute script =
     let json = `Assoc ["script", `String script ; "args", `List []] in
@@ -461,7 +463,8 @@ module Make (Client : HTTP_CLIENT) = struct
   let switch_to_parent_frame =
     J.unit |<< post "/frame/parent" `Null
 
-  let screenshot ?elt () = J.string |<< get (from_opt elt ^ "/screenshot")
+  let screenshot ?elt () =
+    decode_b64 |<< get (from_opt elt ^ "/screenshot")
 
   type key =
     [ `pause
