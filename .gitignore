@@ -18,3 +18,6 @@ _doc/
 _opam/
 
 odoc.css
+
+vendor/geckodriver
+vendor/*.jar
