@@ -1,0 +1,9 @@
+(executable
+  (name github_visit)
+  (modules github_visit)
+  (libraries webdriver_cohttp-lwt-unix))
+
+(executable
+  (name google_search)
+  (modules google_search)
+  (libraries webdriver_cohttp-lwt-unix))
