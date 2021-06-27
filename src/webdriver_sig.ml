@@ -593,11 +593,11 @@ module type S = sig
   (** The HTML [source] code of the current document. *)
 
   val print : string cmd
-  (** The current page, printed as a PDF in base64. *)
+  (** The current page, printed as a PDF. *)
 
   val screenshot : ?elt:elt -> unit -> string cmd
-  (** Returns a screenshot of the current page, or of the provided [?elt].
-      Encoded in base64. *)
+  (** Returns a PNG screenshot of the current page,
+      or of the provided [?elt]. *)
 
   val switch_to_frame : [`top | `id of int | `elt of elt] -> unit cmd
   (** Focus the selected frame inside the current document.
@@ -665,6 +665,16 @@ module type S = sig
       returning its result in [json]. *)
 
   val execute_async : string -> json cmd
-  (** [excute_async "js"] runs the [js] asynchronously on the current page. *)
+  (** [excute_async "js"] runs the [js] asynchronously on the current page.
+
+      This function terminates when the javascript callback [arguments[0]] is
+      called, and returns its parameter as json. This can be used to block
+      until some component has initialized:
+
+      {[
+          let* _ = execute_async {| var k = arguments[0]; something.onload(k); |} in
+          (* blocks until onload trigger k *)
+      ]}
+   *)
 
 end
