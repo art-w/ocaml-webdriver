@@ -1,0 +1,11 @@
+(library
+  (name webdriver_cohttp_lwt_unix)
+  (public_name webdriver_cohttp-lwt-unix)
+  (modules webdriver_cohttp_lwt_unix)
+  (libraries webdriver cohttp-lwt-unix))
+
+(library
+  (name webdriver_cohttp_async)
+  (public_name webdriver_cohttp-async)
+  (modules webdriver_cohttp_async)
+  (libraries webdriver async cohttp-async))
