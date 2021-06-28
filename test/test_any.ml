@@ -106,7 +106,7 @@ module Make (Webdriver : Webdriver.S) = struct
       let* r4' = Window.get_rect in
       assert (r4 = r4') ;
 
-      let my_rect = { x = 42 ; y = 420 ; width = 500 ; height = 600 } in
+      let my_rect = { Window.x = 42 ; y = 420 ; width = 500 ; height = 600 } in
       let* my_rect' = Window.set_rect my_rect in
       assert (my_rect = my_rect') ;
       let* my_rect'' = Window.get_rect in
@@ -193,6 +193,10 @@ module Make (Webdriver : Webdriver.S) = struct
       return ()
     end
 
+  let of_option = function
+    | None -> assert false
+    | Some v -> v
+
   let inspect = test "inspect"
     begin
       let open Webdriver in
@@ -211,10 +215,7 @@ module Make (Webdriver : Webdriver.S) = struct
       assert (new_value = "default value") ;
 
       let* real_value = property input "value" in
-      let real_value = match real_value with
-        | None -> assert false
-        | Some v -> v
-      in
+      let real_value = of_option real_value in
       assert (real_value = "default valuehello") ;
 
       let* color = css input "background-color" in
@@ -249,6 +250,115 @@ module Make (Webdriver : Webdriver.S) = struct
       return ()
     end
 
+  let perform = test "perform"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+
+      let* input = find_first `css "input[name='foo']" in
+      let* default = of_option |<< property input "value" in
+      assert (default = "default value") ;
+
+      let* () = click input in
+      let* focus = active in
+      assert (focus = input) ;
+
+      let* () =
+        perform [ keyboard [ `down "a" ; `up "a" ; `down "b" ; `up "b" ] ]
+      in
+      let* str = of_option |<< property input "value" in
+      assert (str = "default valueab") ;
+
+      let erase_all =
+        [ `down Key.control
+        ; `down "a"
+        ; `up "a"
+        ; `up Key.control
+        ; `down Key.backspace
+        ; `up Key.backspace
+        ] in
+      let* () = perform [ keyboard erase_all ] in
+      let* str = of_option |<< property input "value" in
+      assert (str = "") ;
+
+      let* () = send_keys input "test" in
+      let* str = of_option |<< property input "value" in
+      assert (str = "test") ;
+
+      let* () =
+        perform [ keyboard [ `down Key.enter ; `up Key.enter ; `pause 100 ] ]
+      in
+      let* url = current_url in
+      assert (url = url_b ^ "?foo=test") ;
+
+      let* () = back in
+      let* url = current_url in
+      assert (url = url_a) ;
+
+      let* input = find_first `css "input[name='foo']" in
+      let* str = of_option |<< property input "value" in
+      assert (str = "test") ;
+
+      let* btn = find_first `css "input[type='submit']" in
+      let* rect = rect btn in
+      let* _ = Window.maximize in
+      let move =
+        { move_duration = 50
+        ; move_origin = `viewport (* `elt btn *)
+        ; move_x = 49 + int_of_float rect.x
+        ; move_y = 29 + int_of_float rect.y
+        }
+      in
+
+      let* () = click input in
+      let* active = active in
+      assert (active = input) ;
+
+      let do_click = [ `down button0 ; `pause 50 ; `up button0 ; `pause 50 ] in
+
+      let* () =
+        perform
+          [ mouse    (`move move :: `noop  :: do_click)
+          ; keyboard [`down "z"  ; `up "z"]
+          ]
+      in
+
+      let* url = current_url in
+      assert (url = url_b ^ "?foo=testz") ;
+
+      let* () = back in
+      let* input = find_first `css "input[name='foo']" in
+      let* () = click input in
+
+      let* btn = find_first `css "input[type='submit']" in
+      let reset =
+        { move_duration = 50
+        ; move_origin = `viewport
+        ; move_x = 0
+        ; move_y = 0
+        }
+      in
+      let move =
+        { move_duration = 50
+        ; move_origin = `elt btn
+        ; move_x = 0
+        ; move_y = 0
+        }
+      in
+
+      let* () =
+        perform
+          [ mouse    (`move reset :: `move move :: do_click)
+          ; keyboard [`down "y"   ; `up "y"]
+          ]
+      in
+
+      let* url = current_url in
+      assert (url = url_b ^ "?foo=testzy") ;
+
+      return ()
+    end
+
 
 
   let all =
@@ -261,5 +371,6 @@ module Make (Webdriver : Webdriver.S) = struct
     ; find
     ; inspect
     ; form_interact
+    ; perform
     ]
 end

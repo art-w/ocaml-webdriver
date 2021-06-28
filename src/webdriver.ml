@@ -95,9 +95,10 @@ module Make (Client : HTTP_CLIENT) = struct
       | `ocaml_protocol_failure -> "(ocaml-webdriver) procotol failure"
 
     let to_string e =
-      Printf.sprintf "{ error = %S ; message = %S ; _ }"
+      Printf.sprintf "{ error = %S ; message = %S ; data = %s ; _ }"
         (string_of_kind e.error)
         e.message
+        (Yojson.Safe.to_string e.data)
 
     let check json =
       match json.%("error") with
@@ -134,6 +135,10 @@ module Make (Client : HTTP_CLIENT) = struct
     let int = function
       | `Int i -> i
       | json -> Error.protocol_fail "expected int" json
+    let float = function
+      | `Int i -> float_of_int i
+      | `Float i -> i
+      | json -> Error.protocol_fail "expected float" json
     let string ?default json = match json, default with
       | `String s, _ -> s
       | `Null, Some default -> default
@@ -260,21 +265,14 @@ module Make (Client : HTTP_CLIENT) = struct
   let forward = J.unit |<< post "/forward" `Null
   let refresh = J.unit |<< post "/refresh" `Null
 
-  type rect = { x : int ; y : int ; width : int ; height : int }
+  type rect = { x : float ; y : float ; width : float ; height : float }
 
   let rect_of_json json =
-    { x = J.int json.%("x")
-    ; y = J.int json.%("y")
-    ; width = J.int json.%("width")
-    ; height = J.int json.%("height")
+    { x = J.float json.%("x")
+    ; y = J.float json.%("y")
+    ; width = J.float json.%("width")
+    ; height = J.float json.%("height")
     }
-
-  let json_of_rect r =
-    `Assoc [ "x", `Int r.x
-           ; "y", `Int r.y
-           ; "width", `Int r.width
-           ; "height", `Int r.height
-           ]
 
   module Window = struct
     type t = string
@@ -305,8 +303,23 @@ module Make (Client : HTTP_CLIENT) = struct
     let close = handle_list |<< delete "/window"
     let all = handle_list |<< get "/window/handles"
 
+    type rect = { x : int ; y : int ; width : int ; height : int }
+    let rect_of_json json =
+      { x = J.int json.%("x")
+      ; y = J.int json.%("y")
+      ; width = J.int json.%("width")
+      ; height = J.int json.%("height")
+      }
+    let json_of_rect r =
+      `Assoc [ "x", `Int r.x
+             ; "y", `Int r.y
+             ; "width", `Int r.width
+             ; "height", `Int r.height
+             ]
+
     let get_rect = rect_of_json |<< get "/window/rect"
     let set_rect r = rect_of_json |<< post "/window/rect" (json_of_rect r)
+
     let maximize = rect_of_json |<< post "/window/maximize" `Null
     let minimize = rect_of_json |<< post "/window/minimize" `Null
     let fullscreen = rect_of_json |<< post "/window/fullscreen" `Null
@@ -465,8 +478,13 @@ module Make (Client : HTTP_CLIENT) = struct
   let screenshot ?elt () =
     J.base64 |<< get (from_opt elt ^ "/screenshot")
 
+  type pause =
+    [ `noop
+    | `pause of int
+    ]
+
   type key =
-    [ `pause
+    [ pause
     | `down of string
     | `up of string
     ]
@@ -481,7 +499,7 @@ module Make (Client : HTTP_CLIENT) = struct
     }
 
   type pointer =
-    [ `pause
+    [ pause
     | `cancel
     | `down of button
     | `up of button
@@ -496,12 +514,12 @@ module Make (Client : HTTP_CLIENT) = struct
     }
 
   type wheel =
-    [ `pause
+    [ pause
     | `scroll of scroll
     ]
 
   type 'a kind =
-    | Null : [`pause] kind
+    | Null : [`noop | `pause of int] kind
     | Key : key kind
     | Wheel : wheel kind
     | Pointer : [`mouse | `pen | `touch] -> pointer kind
@@ -513,10 +531,11 @@ module Make (Client : HTTP_CLIENT) = struct
   let int i = `Intlit (Printf.sprintf "%i" i)
 
   let json_of_pause_tick = function
-    | `pause -> `Assoc [ "type", str "pause" ]
+    | `noop -> `Assoc [ "type", str "pause" ]
+    | `pause d -> `Assoc [ "type", str "pause" ; "duration", int d ]
 
   let json_of_key_tick = function
-    | `pause -> json_of_pause_tick `pause
+    | (`noop | `pause _) as pause -> json_of_pause_tick pause
     | `down key ->
         `Assoc [ "type", str "keyDown"
                ; "value", `Stringlit (Key.escape_unicode key)
@@ -526,34 +545,34 @@ module Make (Client : HTTP_CLIENT) = struct
                ; "value", `Stringlit (Key.escape_unicode key)
                ]
 
-  let string_of_origin = function
-    | `viewport -> "viewport"
-    | `pointer -> "pointer"
-    | `elt id -> id
+  let json_of_origin = function
+    | `viewport -> str "viewport"
+    | `pointer -> str "pointer"
+    | `elt id -> `Assoc [web_element_id, str id]
 
-  let string_of_origin' = function
+  let string_of_origin = function
     | `viewport -> "viewport"
     | `elt id -> id
 
   let json_of_pointer_tick = function
-    | `pause -> json_of_pause_tick `pause
+    | (`noop | `pause _) as pause -> json_of_pause_tick pause
     | `cancel   -> `Assoc ["type", str "pointerCancel"]
-    | `down btn -> `Assoc ["type", str "pointerDown" ; "value", int btn]
+    | `down btn -> `Assoc ["type", str "pointerDown" ; "button", int btn]
     | `up btn   -> `Assoc ["type", str "pointerUp" ; "button", int btn]
     | `move m   ->
         `Assoc [ "type", str "pointerMove"
                ; "duration", int m.move_duration
-               ; "origin", str (string_of_origin m.move_origin)
+               ; "origin", json_of_origin m.move_origin
                ; "x", int m.move_x
                ; "y", int m.move_y
                ]
 
   let json_of_wheel_tick = function
-    | `pause -> json_of_pause_tick `pause
+    | (`noop | `pause _) as pause -> json_of_pause_tick pause
     | `scroll m   ->
         `Assoc [ "type", str "scroll"
                ; "duration", int m.scroll_duration
-               ; "origin", str (string_of_origin' m.scroll_origin)
+               ; "origin", str (string_of_origin m.scroll_origin)
                ; "x", int m.scroll_x
                ; "y", int m.scroll_y
                ]
@@ -604,6 +623,9 @@ module Make (Client : HTTP_CLIENT) = struct
     J.unit |<< post_raw "/actions" body
 
   let release = J.unit |<< delete "/actions"
+
+  let sleep duration =
+    perform [ none [ `pause duration ] ]
 
 
   module Cookie = struct

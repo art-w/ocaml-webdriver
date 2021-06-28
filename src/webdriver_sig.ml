@@ -398,7 +398,7 @@ module type S = sig
       See {{: https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_aria-label_attribute}
       ARIA Labels on MDN} *)
 
-  type rect = { x : int ; y : int ; width : int ; height : int }
+  type rect = { x : float ; y : float ; width : float ; height : float }
   val rect : elt -> rect cmd
   (** The position and size of an element on the page. *)
 
@@ -503,13 +503,25 @@ module type S = sig
   val release : unit cmd
   (** [release] any pending keys or button from previous interactions. *)
 
-  val none : ?name:string -> [`pause] list -> action
-  (** An inoperative device. *)
+  (** {2 Timing actions} *)
+
+  type pause =
+    [ `noop (** do nothing *)
+    | `pause of int (** wait for duration (in ms) *)
+    ]
+
+  val none : ?name:string -> pause list -> action
+  (** An inoperative device, that can be used to time the duration
+      of each vertical frame. *)
+
+  val sleep : int -> unit cmd
+  (** [sleep duration] waits for [duration] in milliseconds before
+      continuing. *)
 
   (** {2 Keyboard actions} *)
 
   type key =
-    [ `pause (** do nothing *)
+    [ pause
     | `down of Key.t (** press down the key *)
     | `up of Key.t (** release a pressed key *)
     ]
@@ -533,8 +545,7 @@ module type S = sig
     - The [`viewport] uses the top left of the currently focused frame
       as the zero.
     - The [`pointer] uses the current position of the device on the screen.
-    - The [`elt e] uses the top left position of the element [e]
-      as the origin.
+    - The [`elt e] uses the center of the element [e] as the origin.
   *)
 
   type button = int (** An integer representing the nth button on a mouse. *)
@@ -546,7 +557,7 @@ module type S = sig
   (** The right mouse button. *)
 
   type pointer =
-    [ `pause (** do nothing *)
+    [ pause
     | `cancel (** cancel the pointer current action *)
     | `down of button (** press down the button *)
     | `up of button (** release a pressed button *)
@@ -576,7 +587,7 @@ module type S = sig
       The final scroll destination is relative to the origin. *)
 
   type wheel =
-    [ `pause (** do nothing *)
+    [  pause
     | `scroll of scroll (** scroll to a position *)
     ]
   (** An action from the scroll wheel. *)
@@ -633,6 +644,8 @@ module type S = sig
     val all : t list cmd
     (** List of all the opened browser windows/tabs. *)
 
+    type rect = { x : int ; y : int ; width : int ; height : int }
+
     val get_rect : rect cmd
     (** The size and position of the [current] window. *)
 
@@ -672,7 +685,10 @@ module type S = sig
       until some component has initialized:
 
       {[
-          let* _ = execute_async {| var k = arguments[0]; something.onload(k); |} in
+          let* _ =
+            execute_async
+              {| var k = arguments[0]; something.onload(k); |}
+          in
           (* blocks until onload triggers k *)
       ]}
    *)
