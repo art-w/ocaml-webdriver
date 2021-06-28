@@ -673,7 +673,7 @@ module type S = sig
 
       {[
           let* _ = execute_async {| var k = arguments[0]; something.onload(k); |} in
-          (* blocks until onload trigger k *)
+          (* blocks until onload triggers k *)
       ]}
    *)
 
