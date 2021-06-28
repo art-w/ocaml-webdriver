@@ -130,6 +130,7 @@ module Make (Webdriver : Webdriver.S) = struct
     begin
       let open Webdriver in
       let* () = goto url_a in
+
       let* png = screenshot () in
       assert ("PNG" = String.sub png 1 3) ;
 
@@ -149,16 +150,106 @@ module Make (Webdriver : Webdriver.S) = struct
       let* json = execute "return 42" in
       assert (json = `Int 42) ;
 
+      let t0 = Unix.gettimeofday () in
       let* json =
         execute_async
           {| var k = arguments[0];
              setTimeout(function() { k(666) }, 1000);
           |}
       in
+      let t1 = Unix.gettimeofday () in
       assert (json = `Int 666) ;
+      assert (t1 -. t0 > 1.0) ;
+      return ()
+    end
+
+  let find = test "find"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+
+      let* first_h1 = find_first `tag_name "h1" in
+      let* all_h1 = find_all `tag_name "h1" in
+      assert (List.length all_h1 = 2) ;
+      assert (List.hd all_h1 = first_h1) ;
+
+      let* all_links = find_all `css "a" in
+      let* fst_link  = find_first `partial_link_text "link to B" in
+      let* snd_link  = find_first `partial_link_text "another link" in
+      assert (all_links = [ fst_link ; snd_link ]) ;
+
+      let* fst_link' = find_first `link_text "first link to B" in
+      assert (fst_link = fst_link') ;
+
+      let* fst_link'' = find_first `css "p a" in
+      assert (fst_link = fst_link'') ;
+
+      let* snd_link' = find_first `link_text "another link to B" in
+      assert (snd_link = snd_link') ;
+
+      let* snd_link'' = find_first `xpath "//a[contains(text(), 'another')]" in
+      assert (snd_link = snd_link'') ;
 
       return ()
     end
+
+  let inspect = test "inspect"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+
+      let* input = find_first `css "form input[type='string']" in
+      let* name = attribute input "name" in
+      assert (name = "foo") ;
+
+      let* init_value = attribute input "value" in
+      assert (init_value = "default value") ;
+
+      let* () = send_keys input "hello" in
+
+      let* new_value = attribute input "value" in
+      assert (new_value = "default value") ;
+
+      let* real_value = property input "value" in
+      let real_value = match real_value with
+        | None -> assert false
+        | Some v -> v
+      in
+      assert (real_value = "default valuehello") ;
+
+      let* color = css input "background-color" in
+      assert (color = "rgb(0, 128, 0)") ;
+
+      return ()
+    end
+
+  let form_interact = test "form interaction"
+    begin
+      let open Webdriver in
+      let* () = goto url_a in
+
+      let* input = find_first `css "input[name='foo']" in
+      let* () = send_keys input (Key.backspace ^ "able") in
+
+      let* btn = find_first `css "input[type='submit']" in
+      let* () = click btn in
+
+      let* url = current_url in
+      assert (url = url_b ^ "?foo=default+valuable") ;
+
+      let* () = back in
+      let* input = find_first `css "input[name='foo']" in
+      let* () = clear input in
+      let* () = send_keys input "again" in
+      let* btn = find_first `css "input[type='submit']" in
+      let* () = click btn in
+      let* url = current_url in
+      assert (url = url_b ^ "?foo=again") ;
+
+      return ()
+    end
+
+
 
   let all =
     [ window_rect
@@ -167,5 +258,8 @@ module Make (Webdriver : Webdriver.S) = struct
     ; source
     ; screenshot
     ; exec_js
+    ; find
+    ; inspect
+    ; form_interact
     ]
 end

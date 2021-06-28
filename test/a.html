@@ -3,13 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <title>Page A</title>
+    <style>input[type='string'] { background: green }</style>
   </head>
   <body>
     <h1>The first h1</h1>
     <h1>The second h1</h1>
 
-    <form>
-      <input name=xxx type=string value=xxx />
+    <p>
+      <a href="b.html">first link to B</a>
+      <a href="b.html">another link to B</a>
+    </p>
+
+    <form method="get" action="b.html">
+      <input type="string" name="foo" value="default value" />
+      <input type="submit" value="Go" />
     </form>
 
   </body>

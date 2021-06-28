@@ -1,7 +1,7 @@
 (library
   (name test_any)
   (modules test_any)
-  (libraries webdriver))
+  (libraries webdriver unix))
 
 (executable
   (name test_lwt)
