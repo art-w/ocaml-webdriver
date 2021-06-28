@@ -3,7 +3,7 @@ you to simulate and test user interactions on your website in real life
 conditions, with javascript enabled, on as many browsers and operating systems
 you can get your hands on.
 
-*[Online Documentation]*
+**[Online Documentation]**
 
 You will need to download and run a WebDriver compatible server of your
 favorite browser: [Chrome], [Firefox], [Internet Explorer], [Microsoft Edge],
@@ -18,38 +18,27 @@ $ ./geckodriver -v
 ...	geckodriver	DEBUG	Listening on 127.0.0.1:4444
 ```
 
-We can connect to this driver and visit our github url with:
+We can connect to this driver and visit this github url to fetch the number
+of commits with:
 
 ```ocaml
-open Webdriver_cohttp_lwt_unix
-open Infix
-
-let host = "http://127.0.0.1:4444"
+module W = Webdriver_cohttp_lwt_unix
+open W.Infix
 
 let test =
-  let* () = goto "https://github.com/art-w/ocaml-webdriver" in
-  let* () = lift (Lwt_unix.sleep 1.0) in
-  return ()
-
-let () =
-  Lwt_main.run (run ~host Capabilities.firefox test)
-```
-
-The same example can also be written as:
-
-```ocaml
-open Lwt
-open Webdriver_cohttp_lwt_unix
+  let* () = W.goto "https://github.com/art-w/ocaml-webdriver" in
+  let* commits =
+    W.find_first
+      `xpath
+      "//a[@href='/art-w/ocaml-webdriver/commits/master']//strong"
+  in
+  let* nb = W.text commits in
+  let nb = int_of_string nb in
+  Printf.printf "number of commits = %i\n%!" nb ;
+  W.return ()
 
 let host = "http://127.0.0.1:4444"
-
-let test () =
-  Session.make ~host Capabilities.firefox >>= fun (session, _) ->
-  goto "https://github.com/art-w/ocaml-webdriver" ~session >>= fun () ->
-  Lwt_unix.sleep 1.0 >>= fun () ->
-  Session.delete ~session
-
-let () = Lwt_main.run (test ())
+let () = Lwt_main.run (W.run ~host Capabilities.firefox_headless test)
 ```
 
 See the `examples` and `test` folders for more interactions.
