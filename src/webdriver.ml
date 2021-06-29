@@ -456,7 +456,9 @@ module Make (Client : HTTP_CLIENT) = struct
   let aria_role elt = J.string |<< get (from elt ^ "/computedrole")
   let aria_label elt = get (from elt ^ "/computedlabel")
 
+  let submit elt = J.unit |<< post (from elt ^ "/submit") `Null
   let click elt = J.unit |<< post (from elt ^ "/click") `Null
+  let double_click elt = J.unit |<< post (from elt ^ "/doubleclick") `Null
   let clear elt = J.unit |<< post (from elt ^ "/clear") `Null
 
   let send_keys elt keys =

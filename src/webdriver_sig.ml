@@ -410,6 +410,12 @@ module type S = sig
   val click : elt -> unit cmd
   (** Performs a mouse click on this element. *)
 
+  val double_click : elt -> unit cmd
+  (** Performs a mouse double click on this element. *)
+
+  val submit : elt -> unit cmd
+  (** Submit a form element and its descendents. *)
+
   val clear : elt -> unit cmd
   (** Clears the content of an input element. *)
 
