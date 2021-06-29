@@ -105,6 +105,8 @@ module type S = sig
 
     val map : ('a -> 'b) -> 'a cmd -> 'b cmd
 
+    val map2 : ('a -> 'b -> 'c) -> 'a cmd -> 'b cmd -> 'c cmd
+
     val bind : ('a -> 'b cmd) -> 'a cmd -> 'b cmd
 
     val ( >>| ) : 'a cmd -> ('a -> 'b) -> 'b cmd
@@ -112,6 +114,9 @@ module type S = sig
 
     val ( |<< ) : ('a -> 'b) -> 'a cmd -> 'b cmd
     (** [fn |<< cmd] is [map fn cmd]. *)
+
+    val ( <*> ) : ('a -> 'b) cmd -> 'a cmd -> 'b cmd
+    (** [fn <*> arg] is [map2 (fun f x -> f x) fn arg]. *)
 
     val ( >>= ) : 'a cmd -> ('a -> 'b cmd) -> 'b cmd
     (** [cmd >>= fn] is [bind fn cmd]. *)
@@ -124,6 +129,9 @@ module type S = sig
 
     val ( let* ) : 'a cmd -> ('a -> 'b cmd) -> 'b cmd
     (** [let* x = cmd in e] is [bind (fun x -> e) cmd] *)
+
+    val ( and* ) : 'a cmd -> 'b cmd -> ('a * 'b) cmd
+    val ( and+ ) : 'a cmd -> 'b cmd -> ('a * 'b) cmd
   end
 
   (** All potentital errors raised by the WebDriver protocol. *)

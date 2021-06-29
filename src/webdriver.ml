@@ -213,6 +213,23 @@ module Make (Client : HTTP_CLIENT) = struct
 
     let map = ( |<< )
     let bind = ( =<< )
+
+    let map2 f x y =
+      let* x = x in
+      let+ y = y in
+      f x y
+
+    let ( <*> ) f x =
+      let* f = f in
+      let+ x = x in
+      f x
+
+    let ( and* ) x y =
+      let* x = x in
+      let+ y = y in
+      (x, y)
+
+    let ( and+ ) = ( and* )
   end
 
   open Infix
