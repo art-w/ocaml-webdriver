@@ -627,6 +627,22 @@ module Make (Client : HTTP_CLIENT) = struct
   let sleep duration =
     perform [ none [ `pause duration ] ]
 
+  let key_modifiers = [ Key.control ;  Key.shift ; Key.alt ; Key.meta ]
+  let is_modifier k = List.mem k key_modifiers
+
+  let typing keys =
+    let rec go acc i =
+      if i >= String.length keys
+      then acc
+      else if Str.string_match Key.re_unicode keys i
+      then let key = String.sub keys i 6 in
+           if is_modifier key
+           then `down key :: go (`up key :: acc) (i + 6)
+           else `down key :: `up key :: acc @ go [] (i + 6)
+      else let key = String.sub keys i 1 in
+           `down key :: `up key :: acc @ go [] (i + 1)
+    in
+    go [] 0
 
   module Cookie = struct
 

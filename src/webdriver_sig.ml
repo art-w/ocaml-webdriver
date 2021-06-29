@@ -360,7 +360,7 @@ module type S = sig
   *)
 
   val active : elt cmd
-  (** The currently [active] element on the page. *)
+  (** The currently focused element on the page. *)
 
   (** {1 Inspecting HTML elements} *)
 
@@ -525,10 +525,27 @@ module type S = sig
     | `down of Key.t (** press down the key *)
     | `up of Key.t (** release a pressed key *)
     ]
-  (** An action from a keyboard. *)
+  (** A typing interaction from a keyboard. *)
 
   val keyboard : ?name:string -> key list -> action
-  (** [keyboard keys] is an action that *)
+
+  (** [keyboard keys] is an action that simulates the typing of [keys] from a
+      keyboard. The currently {! active} element will receive the key events.
+  *)
+
+  val typing : string -> key list
+  (** [typing keys] is a helper function to produce an alternating sequence of
+      [`down key] and [`up key] to simulate the typing of [keys]:
+
+      {[ typing "ab" = [`down "a" ; `up "a" ; `down "b" ; `up "b"] ]}
+
+      The modifier {! Key.alt}, {! Key.control}, {! Key.meta} and {! Key.shift}
+      will be pressed differently to trigger the desired shortcut:
+
+      {[ typing (Key.control ^ "a") (* CTRL-A *)
+            = [`down Key.control ; `down "a" ; `up "a" ; `up Key.control]
+      ]}
+  *)
 
   (** {2 Pointer actions} *)
 

@@ -263,13 +263,13 @@ module Make (Webdriver : Webdriver.S) = struct
       let* focus = active in
       assert (focus = input) ;
 
-      let* () =
-        perform [ keyboard [ `down "a" ; `up "a" ; `down "b" ; `up "b" ] ]
-      in
+      let expected = [ `down "a" ; `up "a" ; `down "b" ; `up "b" ] in
+      assert (typing "ab" = expected) ;
+      let* () = perform [ keyboard (typing "ab") ] in
       let* str = of_option |<< property input "value" in
       assert (str = "default valueab") ;
 
-      let erase_all =
+      let erase_all_expected =
         [ `down Key.control
         ; `down "a"
         ; `up "a"
@@ -277,6 +277,9 @@ module Make (Webdriver : Webdriver.S) = struct
         ; `down Key.backspace
         ; `up Key.backspace
         ] in
+      let erase_all = typing (Key.control ^ "a" ^ Key.backspace) in
+      assert (erase_all = erase_all_expected) ;
+
       let* () = perform [ keyboard erase_all ] in
       let* str = of_option |<< property input "value" in
       assert (str = "") ;
@@ -285,9 +288,7 @@ module Make (Webdriver : Webdriver.S) = struct
       let* str = of_option |<< property input "value" in
       assert (str = "test") ;
 
-      let* () =
-        perform [ keyboard [ `down Key.enter ; `up Key.enter ; `pause 100 ] ]
-      in
+      let* () = perform [ keyboard (typing Key.enter @ [ `pause 100 ]) ] in
       let* url = current_url in
       assert (url = url_b ^ "?foo=test") ;
 
