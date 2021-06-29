@@ -534,6 +534,20 @@ module Make (Client : HTTP_CLIENT) = struct
     ; scroll_y : int
     }
 
+  let scroll_absolute ?(duration = 0) ?(x = 0) ?(y = 0) () =
+    { scroll_duration = duration
+    ; scroll_origin = `viewport
+    ; scroll_x = x
+    ; scroll_y = y
+    }
+
+  let scroll_to ?(duration = 0) ?(dx = 0) ?(dy = 0) elt =
+    { scroll_duration = duration
+    ; scroll_origin = `elt elt
+    ; scroll_x = dx
+    ; scroll_y = dy
+    }
+
   type wheel =
     [ pause
     | `scroll of scroll

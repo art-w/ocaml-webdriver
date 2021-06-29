@@ -550,8 +550,9 @@ module type S = sig
   (** {2 Pointer actions} *)
 
   type move
-  (** A pointer movement to a new location, taking some [duration] of time (in ms).
-      The default [duration] is [0]ms. *)
+  (** A pointer movement to a new location, taking some [duration] of time
+      (in milliseconds).  The default [duration] is a teleportation in [0]ms.
+  *)
 
   val absolute : ?duration:int -> int * int -> move
   (** [absolute (x, y)] moves the pointer to the position [(x, y)]
@@ -594,15 +595,18 @@ module type S = sig
 
   (** {2 Scroll wheel actions} *)
 
-  type scroll =
-    { scroll_duration : int (** time taken by the scroll *)
-    ; scroll_origin : [`viewport | `elt of elt]
-      (** relative position of [scroll_x,scroll_y] *)
-    ; scroll_x : int
-    ; scroll_y : int
-    }
-  (** A scroll movement.
-      The final scroll destination is relative to the origin. *)
+  type scroll
+    (** A scroll movement, taking some [duration] of time in milliseconds. *)
+
+  val scroll_absolute : ?duration:int -> ?x:int -> ?y:int -> unit -> scroll
+  (** [scroll_absolute ~x ~y ()] resets the scrollbar such that the
+      position [x, y] falls into view, as measured from the top of the page.
+      The default value of [x] and [y] is 0. *)
+
+  val scroll_to : ?duration:int -> ?dx:int -> ?dy:int -> elt -> scroll
+  (** [scroll_to ~dx ~dy elt] resets the scrollbar such that the center of the
+      element [elt], offsetted by [(dx, dy)], is inside the view.
+      The default offset of [dx] and [dy] is 0. *)
 
   type wheel =
     [  pause
@@ -611,6 +615,7 @@ module type S = sig
   (** An action from the scroll wheel. *)
 
   val wheel : ?name:string -> wheel list -> action
+  (** [wheel scrolls] performs the scrolling actions. *)
 
 
   (** {1 Document} *)
