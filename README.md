@@ -3,6 +3,13 @@ you to simulate and test user interactions on your website in real life
 conditions, with javascript enabled, on as many browsers and operating systems
 you can get your hands on.
 
+You can use this library to:
+
+- Create and manage browser windows and cookies
+- Visit urls and inspect the DOM properties of HTML elements in the document
+- Click and type to interact with the page, then check that it produced the
+  desired outcome.
+
 **[Online Documentation]**
 
 You will need to download and run a WebDriver compatible server of your
