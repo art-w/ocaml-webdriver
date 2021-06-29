@@ -575,8 +575,11 @@ module type S = sig
   val button_left : button
   (** The left mouse button (at position [0]). *)
 
+  val button_middle : button
+  (** The middle mouse button (at position [1]). *)
+
   val button_right : button
-  (** The right mouse button (at position [1]). *)
+  (** The right mouse button (at position [2]). *)
 
   type pointer =
     [ pause

@@ -642,8 +642,9 @@ module Make (Client : HTTP_CLIENT) = struct
   let json_of_action (Do ((id, kind), lst)) =
     `Assoc (("id", str id) :: assoc_of_kind kind lst)
 
-  let button_left  = 0
-  let button_right = 1
+  let button_left   = 0
+  let button_middle = 1
+  let button_right  = 2
 
   let none ?(name = "none") actions = Do ((name, Null), actions)
   let keyboard ?(name = "keyboard") actions = Do ((name, Key), actions)
