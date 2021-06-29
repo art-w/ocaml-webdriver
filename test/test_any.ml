@@ -303,19 +303,16 @@ module Make (Webdriver : Webdriver.S) = struct
       let* btn = find_first `css "input[type='submit']" in
       let* rect = rect btn in
       let* _ = Window.maximize in
-      let move =
-        { move_duration = 50
-        ; move_origin = `viewport (* `elt btn *)
-        ; move_x = 49 + int_of_float rect.x
-        ; move_y = 29 + int_of_float rect.y
-        }
-      in
+      let btn_top_left = (1 + int_of_float rect.x, 1 + int_of_float rect.y) in
+      let move = absolute ~duration:50 btn_top_left in
 
       let* () = click input in
       let* active = active in
       assert (active = input) ;
 
-      let do_click = [ `down button0 ; `pause 50 ; `up button0 ; `pause 50 ] in
+      let do_click =
+        [ `down button_left ; `pause 50 ; `up button_left ; `pause 50 ]
+      in
 
       let* () =
         perform
@@ -332,20 +329,8 @@ module Make (Webdriver : Webdriver.S) = struct
       let* () = click input in
 
       let* btn = find_first `css "input[type='submit']" in
-      let reset =
-        { move_duration = 50
-        ; move_origin = `viewport
-        ; move_x = 0
-        ; move_y = 0
-        }
-      in
-      let move =
-        { move_duration = 50
-        ; move_origin = `elt btn
-        ; move_x = 0
-        ; move_y = 0
-        }
-      in
+      let reset = absolute ~duration:50 (0, 0) in
+      let move = center ~duration:50 btn in
 
       let* () =
         perform

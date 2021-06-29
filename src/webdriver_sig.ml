@@ -549,29 +549,30 @@ module type S = sig
 
   (** {2 Pointer actions} *)
 
-  type move =
-    { move_duration : int (** time taken by the move *)
-    ; move_origin : [`viewport | `pointer | `elt of elt]
-      (** relative position of [move_x,move_y] *)
-    ; move_x : int
-    ; move_y : int
-    }
-  (** A mouse/pointer movement. The target destination [move_x,move_y]
-      is relative to the origin:
+  type move
+  (** A pointer movement to a new location, taking some [duration] of time (in ms).
+      The default [duration] is [0]ms. *)
 
-    - The [`viewport] uses the top left of the currently focused frame
-      as the zero.
-    - The [`pointer] uses the current position of the device on the screen.
-    - The [`elt e] uses the center of the element [e] as the origin.
-  *)
+  val absolute : ?duration:int -> int * int -> move
+  (** [absolute (x, y)] moves the pointer to the position [(x, y)]
+      measured from the top left of the document. *)
+
+  val relative : ?duration:int -> int * int -> move
+  (** [relative (dx, dy)] moves the pointer by [(dx, dy)]
+      from its current location. *)
+
+  val center : ?duration:int -> ?offset:int * int -> elt -> move
+  (** [center ~offset:(dx, dy) elt] moves the pointer to the center
+      of the element [elt] offsetted by [offset].
+      The default [offset] is [(0, 0)]. *)
 
   type button = int (** An integer representing the nth button on a mouse. *)
 
-  val button0 : button
-  (** The left mouse button. *)
+  val button_left : button
+  (** The left mouse button (at position [0]). *)
 
-  val button1 : button
-  (** The right mouse button. *)
+  val button_right : button
+  (** The right mouse button (at position [1]). *)
 
   type pointer =
     [ pause

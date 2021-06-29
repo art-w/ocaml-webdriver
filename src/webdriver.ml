@@ -498,6 +498,27 @@ module Make (Client : HTTP_CLIENT) = struct
     ; move_y : int
     }
 
+  let absolute ?(duration = 0) (x, y) =
+    { move_duration = duration
+    ; move_origin = `viewport
+    ; move_x = x
+    ; move_y = y
+    }
+
+  let relative ?(duration = 0) (x, y) =
+    { move_duration = duration
+    ; move_origin = `pointer
+    ; move_x = x
+    ; move_y = y
+    }
+
+  let center ?(duration = 0) ?(offset = (0, 0)) elt =
+    { move_duration = duration
+    ; move_origin = `elt elt
+    ; move_x = fst offset
+    ; move_y = snd offset
+    }
+
   type pointer =
     [ pause
     | `cancel
@@ -606,8 +627,8 @@ module Make (Client : HTTP_CLIENT) = struct
   let json_of_action (Do ((id, kind), lst)) =
     `Assoc (("id", str id) :: assoc_of_kind kind lst)
 
-  let button0 = 0
-  let button1 = 1
+  let button_left  = 0
+  let button_right = 1
 
   let none ?(name = "none") actions = Do ((name, Null), actions)
   let keyboard ?(name = "keyboard") actions = Do ((name, Key), actions)
