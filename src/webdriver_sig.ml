@@ -384,6 +384,9 @@ module type S = sig
   val is_enabled : elt -> bool cmd
   (** The boolean status of an interactive element. *)
 
+  val is_displayed : elt -> bool cmd
+  (** Determines if the element is visible. *)
+
   val css : elt -> string -> string cmd
   (** [css e prop] returns the computed value of the css property [prop]
       for the element [e]. *)

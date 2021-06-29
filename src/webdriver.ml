@@ -438,6 +438,7 @@ module Make (Client : HTTP_CLIENT) = struct
 
   let is_selected elt = J.bool |<< get (from elt ^ "/selected")
   let is_enabled elt = J.bool |<< get (from elt ^ "/enabled")
+  let is_displayed elt = J.bool |<< get (from elt ^ "/displayed")
 
   let attribute elt attr =
     J.string |<< get (from elt ^ "/attribute/" ^ attr)

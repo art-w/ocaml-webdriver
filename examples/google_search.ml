@@ -52,12 +52,17 @@ let accept_cookies =
 let accept_cookies =
   let* popup = wait (find_first `css "#xe7COe") in
   let* btn = wait (find_first `css "#L2AGLb") in
+  let* disp = is_displayed btn in
+  assert (disp = true) ;
   let* () = click btn in
   let* () =
     wait_for_condition
       (fun () ->
+        let* disp = is_displayed btn in
         let+ visible = css popup "display" in
-        visible = "none")
+        let is_visible = visible = "none" in
+        assert (is_visible = disp) ;
+        disp)
   in
   Cookie.all
 
