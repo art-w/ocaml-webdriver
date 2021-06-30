@@ -160,6 +160,8 @@ module Make (Client : HTTP_CLIENT) = struct
     let first_match browsers = `Assoc [("firstMatch", `List browsers)]
     let browser_name name = `Assoc ["browserName", `String name]
 
+    let chrome = capabilities @@ first_match [browser_name "chrome"]
+
     let firefox = capabilities @@ first_match [browser_name "firefox"]
 
     let firefox_headless =

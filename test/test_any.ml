@@ -219,7 +219,7 @@ module Make (Webdriver : Webdriver.S) = struct
       assert (real_value = "default valuehello") ;
 
       let* color = css input "background-color" in
-      assert (color = "rgb(0, 128, 0)") ;
+      assert (List.mem color ["rgb(0, 128, 0)"; "rgba(0, 128, 0, 1)"]) ;
 
       return ()
     end

@@ -192,6 +192,14 @@ module type S = sig
     (** The capabilities are highly specific to the targetted browser. Here are
         some examples to get you started: *)
 
+    val chrome : t
+    (** The default [chrome] configuration:
+    {[
+      { "capabilities":
+          { "firstMatch": [{ "browser_name": "chrome" } ] } }
+    ]}
+    *)
+
     val firefox : t
     (** The default [firefox] configuration:
     {[

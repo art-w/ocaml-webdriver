@@ -19,5 +19,6 @@ _opam/
 
 odoc.css
 
+vendor/chromedriver
 vendor/geckodriver
 vendor/*.jar
