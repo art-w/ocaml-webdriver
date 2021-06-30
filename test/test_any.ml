@@ -345,6 +345,28 @@ module Make (Webdriver : Webdriver.S) = struct
       return ()
     end
 
+  let alert_js = test "alert from js"
+    begin
+      let open Webdriver in
+      let* () = goto url_b in
+
+      let* btn = find_first `css "#alert" in
+      let* txt = text btn in
+      assert (txt = "Alert on double click") ;
+
+      let* () = double_click btn in
+
+      let* msg = Alert.get_text in
+      assert (msg = Some "Hi from javascript") ;
+
+      let* () = Alert.dismiss in
+
+      let* txt = text btn in
+      assert (txt = "Clicked!") ;
+
+      return ()
+    end
+
 
 
   let all =
@@ -358,5 +380,6 @@ module Make (Webdriver : Webdriver.S) = struct
     ; inspect
     ; form_interact
     ; perform
+    ; alert_js
     ]
 end

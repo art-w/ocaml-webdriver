@@ -475,7 +475,6 @@ module Make (Client : HTTP_CLIENT) = struct
 
   let submit elt = J.unit |<< post (from elt ^ "/submit") `Null
   let click elt = J.unit |<< post (from elt ^ "/click") `Null
-  let double_click elt = J.unit |<< post (from elt ^ "/doubleclick") `Null
   let clear elt = J.unit |<< post (from elt ^ "/clear") `Null
 
   let send_keys elt keys =
@@ -679,6 +678,13 @@ module Make (Client : HTTP_CLIENT) = struct
     J.unit |<< post_raw "/actions" body
 
   let release = J.unit |<< delete "/actions"
+
+  let double_click_action =
+    let click = [ `down button_left ; `up button_left ] in
+    click @ click
+
+  let double_click elt =
+    perform [ mouse (`move (center elt) :: double_click_action) ]
 
   let sleep duration =
     perform [ none [ `pause duration ] ]

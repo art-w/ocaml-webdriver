@@ -7,5 +7,15 @@
   <body>
     <h1>The first h1</h1>
     <h1>The second h1</h1>
+
+    <p><button id="alert">Alert on double click</button></p>
+
+  <script>
+    var btn = document.getElementById('alert');
+    btn.addEventListener('dblclick', function () {
+      btn.innerHTML = 'Clicked!';
+      alert('Hi from javascript');
+    });
+  </script>
   </body>
 </html>
