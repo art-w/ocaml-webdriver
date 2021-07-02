@@ -288,9 +288,12 @@ module Make (Webdriver : Webdriver.S) = struct
       let* str = of_option |<< property input "value" in
       assert (str = "test") ;
 
-      let* () = perform [ keyboard (typing Key.enter @ [ `pause 100 ]) ] in
-      let* url = current_url in
-      assert (url = url_b ^ "?foo=test") ;
+      let* () = perform [ keyboard (typing Key.enter) ] in
+      let* () =
+        Wait.until
+          (let+ url = current_url in
+           url = url_b ^ "?foo=test")
+      in
 
       let* () = back in
       let* url = current_url in
@@ -310,9 +313,7 @@ module Make (Webdriver : Webdriver.S) = struct
       let* active = active in
       assert (active = input) ;
 
-      let do_click =
-        [ `down button_left ; `pause 50 ; `up button_left ; `pause 50 ]
-      in
+      let do_click = [ `down button_left ; `pause 50 ; `up button_left ] in
 
       let* () =
         perform
@@ -321,8 +322,11 @@ module Make (Webdriver : Webdriver.S) = struct
           ]
       in
 
-      let* url = current_url in
-      assert (url = url_b ^ "?foo=testz") ;
+      let* () =
+        Wait.until
+          (let+ url = current_url in
+           url = url_b ^ "?foo=testz")
+      in
 
       let* () = back in
       let* input = find_first `css "input[name='foo']" in

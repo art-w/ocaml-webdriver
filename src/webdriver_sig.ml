@@ -160,6 +160,9 @@ module type S = sig
         created by some (slow) javascript. See {! Timeouts} to add an implicit
         wait for this situation.
     *)
+
+    val fail : exn -> 'a cmd
+    (** [fail e] raises the exception [e]. *)
   end
 
   exception Webdriver of Error.t
@@ -281,6 +284,64 @@ module type S = sig
            -> unit cmd
     (** [set ?script ?page_load ?implicit_wait ()] updates the configuration
         for the provided fields. *)
+  end
+
+  (** Even though the browser attempts to complete most operations before
+      giving back control, some commands might trigger too soon and raise
+      an error. The recommended strategy is to sleep and retry the
+      operation repeatedly until it succeeds.
+  *)
+  module Wait : sig
+    (** The default parameters are:
+      - [?sleep = 50ms] is the amount of time to {! sleep}
+        before retrying the command.
+      - [?max = 3000ms] is the maximum total time spend waiting
+        in between retries (in milliseconds).
+      - [?errors] are the recoverable errors. By default:
+
+      {[
+      [ `element_not_interactable
+      ; `invalid_element_state
+      ; `move_target_out_of_bounds
+      ; `no_such_alert
+      ; `no_such_cookie
+      ; `no_such_element
+      ; `no_such_frame
+      ; `no_such_window
+      ]
+      ]}
+
+      The others WebDriver errors are more indicative of an issue in your
+      automation script.
+    *)
+
+    val retry : ?max:int -> ?sleep:int -> ?errors:Error.error list
+             -> 'a cmd -> 'a cmd
+    (** [retry cmd] attempts to execute [cmd]. If it fails with a recoverable
+        error, the execution sleeps for a bit to give the browser a chance to
+        catch up, then the operation is retried until it succeeds or the [max]
+        time is reached.
+
+        {[ let* e = find_first `css "#id" in (* might raise `no_such_element *)
+           (* vs *)
+           let* e = Wait.retry @@ find_first `css "#id" in (* deterministic *)
+        ]}
+    *)
+
+    val until : ?max:int -> ?sleep:int -> ?errors:Error.error list
+             -> bool cmd -> unit cmd
+    (** [until condition] behaves like [retry condition], but the predicate
+        must also be satisfied at the end.
+
+        Raises [`unspecified "condition"] if the [max] time is reached and
+        the condition is still unsatisfied.
+
+        {[ let* url = current_url in
+           let* () = send_keys input ("hello" ^ Key.Enter) in
+           let* () = Wait.until @@ map (( <> ) url ) current_url in
+           (* blocks until the form is actually submitted. *)
+        ]}
+    *)
   end
 
   (** {1 Navigation} *)
@@ -616,10 +677,12 @@ module type S = sig
   (** [mouse actions] describes the movement, click, etc of a mouse pointer. *)
 
   val touch : ?name:string -> pointer list -> action
-  (** [touch actions] describes the interactions of a touch finger device. *)
+  (** [touch actions] describes the interactions of a touch finger device.
+      If multiple touch devices are used in the same {! perform}, they must
+      have different names. *)
 
   val pen : ?name:string -> pointer list -> action
-  (** [pen actions] describes an interaction of a pencil. *)
+  (** [pen actions] describes the interactions of a pencil. *)
 
   (** {2 Scroll wheel actions} *)
 

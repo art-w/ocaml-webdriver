@@ -114,14 +114,15 @@ module Make (Client : HTTP_CLIENT) = struct
           raise (Webdriver e)
       | v -> protocol_fail "expected null or string" v
 
-    let is_match kinds e =
-      List.exists (fun p -> e.error = p) kinds
+    let is_match e kinds = List.mem e.error kinds
 
     let catch m ?(errors = []) f = fun ~session ->
       Client.catch
         (fun () -> m () ~session)
-        (function Webdriver e when is_match errors e -> f e ~session
+        (function Webdriver e when is_match e errors -> f e ~session
                 | exn -> Client.fail exn)
+
+    let fail e ~session:_ = Client.fail e
   end
 
   module J = struct
@@ -833,6 +834,52 @@ module Make (Client : HTTP_CLIENT) = struct
       in
       let json = `Assoc (script @ page_load @ implicit_wait) in
       J.unit |<< post "/timeouts" json
+  end
+
+  module Wait = struct
+
+    let recoverable_errors =
+      [ `element_not_interactable
+      ; `invalid_element_state
+      ; `move_target_out_of_bounds
+      ; `no_such_alert
+      ; `no_such_cookie
+      ; `no_such_element
+      ; `no_such_frame
+      ; `no_such_window
+      ]
+
+    let wait dt = sleep dt
+
+    let retry ?(max = 3000) ?(sleep = 50) ?(errors = recoverable_errors) cmd =
+      let rec go fuel =
+        if fuel < 0
+        then cmd
+        else Error.catch
+                (fun () -> cmd)
+                ~errors
+                (fun _ -> let* () = wait sleep in go (fuel - sleep))
+      in
+      go max
+
+
+    let condition_error = `unspecified "condition"
+    let fail_condition =
+      { Error.error = condition_error
+      ; message = "Wait.until condition is unsatisfied"
+      ; data = (`Null : json)
+      ; stacktrace = ""
+      }
+
+    let until ?max ?sleep ?(errors = recoverable_errors) condition =
+      let fail () = Error.fail (Webdriver fail_condition) in
+      let cmd =
+        let* ok = condition in
+        if ok
+        then return ()
+        else fail ()
+      in
+      retry ?max ?sleep ~errors:(condition_error :: errors) cmd
   end
 
 end
