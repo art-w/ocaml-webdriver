@@ -10,6 +10,7 @@ bug-reports: "https://github.com/art-w/ocaml-webdriver/issues"
 depends: [
   "dune" {>= "2.7"}
   "ocaml" {>= "4.08"}
+  "base64"
   "yojson"
   "odoc" {with-doc}
 ]
