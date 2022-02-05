@@ -163,6 +163,21 @@ module Make (Client : HTTP_CLIENT) = struct
 
     let chrome = capabilities @@ first_match [browser_name "chrome"]
 
+    let chrome_headless =
+        capabilities
+        @@ first_match
+         [ `Assoc [ "browserName", `String "chrome"
+                  ; "goog:chromeOptions",
+                    `Assoc [ "args", `List [ `String "--headless" 
+                                           ; `String "--disable-gpu"
+                                           ; `String "--no-sandbox"
+                                           ; `String "--disable-dev-shm-usage"
+                                           ; `String "--window-size=1920,1080"
+                                           ]
+                           ]
+                  ]
+         ]
+
     let firefox = capabilities @@ first_match [browser_name "firefox"]
 
     let firefox_headless =
