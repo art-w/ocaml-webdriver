@@ -203,6 +203,26 @@ module type S = sig
     ]}
     *)
 
+    val chrome_headless : t
+    (** Same as [chrome],
+        but runs in the background without a graphical window:
+    {[
+      { "capabilities":
+          { "firstMatch":
+              [{ "browser_name": "chrome",
+                 "goog:chromeOptions": { "args": [ "--headless"
+                                                 , "--disable-gpu"
+                                                 , "--no-sandbox"
+                                                 , "--disable-dev-shm-usage"
+                                                 , "--window-size=1920,1080"
+                                                 ] }
+               }
+              ]
+          }
+      }
+    ]}
+    *)
+
     val firefox : t
     (** The default [firefox] configuration:
     {[
