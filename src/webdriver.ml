@@ -168,7 +168,7 @@ module Make (Client : HTTP_CLIENT) = struct
         @@ first_match
          [ `Assoc [ "browserName", `String "chrome"
                   ; "goog:chromeOptions",
-                    `Assoc [ "args", `List [ `String "--headless" 
+                    `Assoc [ "args", `List [ `String "--headless"
                                            ; `String "--disable-gpu"
                                            ; `String "--no-sandbox"
                                            ; `String "--disable-dev-shm-usage"
