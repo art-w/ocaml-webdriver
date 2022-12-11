@@ -18,6 +18,7 @@ module Client = struct
   let post url body =
     let* _resp, body =
       Client.post
+        ~chunked:false
         ~headers:(Cohttp.Header.init_with "Content-Type" "application/json")
         ~body:(Cohttp_lwt__Body.of_string body)
         (Uri.of_string url)
