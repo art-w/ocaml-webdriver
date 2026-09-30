@@ -22,3 +22,4 @@ odoc.css
 vendor/chromedriver
 vendor/geckodriver
 vendor/*.jar
+vendor/tmp/
