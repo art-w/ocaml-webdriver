@@ -24,3 +24,13 @@
  (deps a.html b.html)
  (action
   (run ./test_async.exe)))
+
+(executable
+  (name test_eio)
+  (modules test_eio)
+  (libraries test_any eio_main webdriver_cohttp-eio))
+
+(rule
+  (alias test_eio)
+  (deps a.html b.html)
+  (action (run ./test_eio.exe)))

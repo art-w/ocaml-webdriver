@@ -9,7 +9,16 @@ module type HTTP_CLIENT = sig
   (** Interactions may raise exceptions: *)
 
   val fail : exn -> 'a t
-  val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
+
+  val catch : (unit -> 'a t) -> (exn -> 'a t option) -> 'a t
+  (** [catch f handle] runs [f ()] and, if it raises an exception [e] such
+      that [handle e] returns [Some k], continues with [k]. Otherwise the
+      exception propagates untouched. *)
+
+  val protect : finally:(unit -> unit t) -> (unit -> 'a t) -> 'a t
+  (** [protect ~finally f] runs [f ()], then [finally ()] whether [f]
+      succeeded, raised an exception or was cancelled. If [finally] raises,
+      its exception replaces the one from [f]. *)
 
   (** The following HTTP methods are required: *)
 

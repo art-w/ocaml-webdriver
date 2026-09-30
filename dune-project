@@ -22,3 +22,8 @@
   (name webdriver_cohttp-async)
   (synopsis "Remote control interface to web browsers (using Cohttp_async)")
   (depends webdriver cohttp-async))
+
+(package
+  (name webdriver_cohttp-eio)
+  (synopsis "Remote control interface to web browsers (using Cohttp_eio)")
+  (depends webdriver (cohttp-eio (>= "6.0.0"))))

@@ -9,3 +9,9 @@
  (public_name webdriver_cohttp-async)
  (modules webdriver_cohttp_async)
  (libraries webdriver async cohttp-async))
+
+(library
+  (name webdriver_cohttp_eio)
+  (public_name webdriver_cohttp-eio)
+  (modules webdriver_cohttp_eio)
+  (libraries webdriver eio cohttp-eio))

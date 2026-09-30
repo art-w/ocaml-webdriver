@@ -9,7 +9,14 @@ module Client = struct
   let ( let* ) m fn = Lwt.( >>= ) m fn
 
   let fail = Lwt.fail
-  let catch = Lwt.catch
+
+  let catch f handle =
+    Lwt.catch f (fun e ->
+      match handle e with
+      | Some k -> k
+      | None -> Lwt.reraise e)
+
+  let protect ~finally f = Lwt.finalize f finally
 
   let get url =
     let* _resp, body = Client.get (Uri.of_string url) in

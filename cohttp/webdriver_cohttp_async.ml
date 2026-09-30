@@ -12,10 +12,15 @@ module Client = struct
 
   let fail e = raise e
   let catch f handle =
-    let* x = Async.try_with f in
+    let* x = Async.try_with ~extract_exn:true f in
     match x with
     | Ok x -> return x
-    | Error e -> handle e
+    | Error e ->
+        match handle e with
+        | Some k -> k
+        | None -> raise e
+
+  let protect ~finally f = Monitor.protect f ~finally
 
   let get url =
     let* _resp, body = Client.get (Uri.of_string url) in

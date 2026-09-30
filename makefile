@@ -7,6 +7,10 @@ test_lwt:
 test_async:
 	dune exec --force test/test_async.exe
 
+.PHONY: test_eio
+test_eio:
+	dune exec --force test/test_eio.exe
+
 .PHONY: selenium
 selenium:
 	cd vendor && ./run_selenium.sh

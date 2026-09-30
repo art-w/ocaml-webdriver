@@ -114,13 +114,15 @@ module Make (Client : HTTP_CLIENT) = struct
           raise (Webdriver e)
       | v -> protocol_fail "expected null or string" v
 
-    let is_match e kinds = List.mem e.error kinds
+    let is_match e = function
+      | None -> true
+      | Some kinds -> List.mem e.error kinds
 
-    let catch m ?(errors = []) f = fun ~session ->
+    let catch m ?errors f = fun ~session ->
       Client.catch
         (fun () -> m () ~session)
-        (function Webdriver e when is_match e errors -> f e ~session
-                | exn -> Client.fail exn)
+        (function Webdriver e when is_match e errors -> Some (f e ~session)
+                | _ -> None)
 
     let fail e ~session:_ = Client.fail e
   end
@@ -273,14 +275,9 @@ module Make (Client : HTTP_CLIENT) = struct
   let run ~host capabilities t =
     let ( >>= ) m f = Client.bind f m in
     Session.make ~host capabilities >>= fun (session, _) ->
-    Client.catch
-      (fun () -> Client.map (fun x -> Ok x) (t ~session))
-      (fun e -> Client.return (Error e))
-    >>= fun result ->
-    Session.delete ~session >>= fun () ->
-    match result with
-    | Ok x -> Client.return x
-    | Error e -> Client.fail e
+    Client.protect
+      ~finally:(fun () -> Session.delete ~session)
+      (fun () -> t ~session)
 
   let title = J.string |<< get "/title"
   let source = J.string |<< get "/source"
