@@ -4,7 +4,7 @@ module Test = Test_any.Make (W)
 let host = "http://localhost:4444/wd/hub"
 
 let run_test ~client (name, test) =
-  try W.run ~host W.Capabilities.firefox_headless test client ;
+  try W.run ~host Test.capabilities test client ;
       Printf.printf "[OK] %s\n%!" name
   with
   | W.Webdriver e ->

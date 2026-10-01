@@ -5,7 +5,7 @@ let host = "http://localhost:4444/wd/hub"
 
 let run_test (name, test) =
   try Async.Thread_safe.block_on_async_exn
-        (fun () -> W.run ~host W.Capabilities.firefox_headless test) ;
+        (fun () -> W.run ~host Test.capabilities test) ;
       Printf.printf "[OK] %s\n%!" name
   with
   | W.Webdriver e ->

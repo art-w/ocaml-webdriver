@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    name: Build (OCaml ${{ matrix.ocaml-compiler }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ocaml-compiler: "4.14"
+            packages: webdriver,webdriver_cohttp-lwt-unix,webdriver_cohttp-async
+          - ocaml-compiler: "5"
+            packages: webdriver,webdriver_cohttp-lwt-unix,webdriver_cohttp-async,webdriver_cohttp-eio
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+
+      - name: Install dependencies
+        run: |
+          opam install --deps-only --with-doc \
+            $(echo "${{ matrix.packages }}" | tr ',' '\n' | sed 's|.*|./&.opam|')
+
+      - name: Build
+        run: opam exec -- dune build -p ${{ matrix.packages }} @install
+
+      - name: Build documentation
+        run: opam exec -- dune build -p ${{ matrix.packages }} @doc
+
+  test:
+    name: Test (${{ matrix.backend }}, ${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [lwt, async, eio]
+        browser: [firefox, chrome]
+    env:
+      BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5"
+          dune-cache: true
+
+      - name: Install dependencies
+        run: |
+          opam install . --deps-only --with-test
+          opam install eio_main
+
+      - name: Build
+        run: opam exec -- dune build
+
+      - name: Start Selenium
+        working-directory: vendor
+        run: |
+          ./get_selenium.sh
+          mkdir -p tmp
+          TMPDIR="$(pwd)/tmp" java \
+            -Dwebdriver.gecko.driver="$GECKOWEBDRIVER/geckodriver" \
+            -Dwebdriver.chrome.driver="$CHROMEWEBDRIVER/chromedriver" \
+            -jar selenium-server-standalone-3.141.59.jar \
+            -role standalone > selenium.log 2>&1 &
+          for _ in $(seq 60); do
+            curl -sf http://localhost:4444/wd/hub/status && exit 0
+            sleep 1
+          done
+          cat selenium.log
+          exit 1
+
+      - name: Run tests
+        shell: bash
+        run: |
+          opam exec -- dune exec --force test/test_${{ matrix.backend }}.exe 2>&1 | tee test.log
+          ! grep -q '^\[FAIL\]' test.log
+
+      - name: Selenium logs
+        if: failure() && hashFiles('vendor/selenium.log') != ''
+        run: cat vendor/selenium.log

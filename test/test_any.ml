@@ -4,6 +4,12 @@ module Make (Webdriver : Webdriver.S) = struct
   let url_a = url_of_file "test/a.html"
   let url_b = url_of_file "test/b.html"
 
+  let capabilities =
+    match Sys.getenv_opt "BROWSER" with
+    | None | Some "firefox" -> Webdriver.Capabilities.firefox_headless
+    | Some "chrome" -> Webdriver.Capabilities.chrome_headless
+    | Some browser -> failwith ("unknown BROWSER: " ^ browser)
+
   let test name cmds = (name, cmds)
 
   open Webdriver.Infix
@@ -78,6 +84,9 @@ module Make (Webdriver : Webdriver.S) = struct
       assert (r1.y >= 0) ;
       assert (r1.width > 0) ;
       assert (r1.height > 0) ;
+
+      let small_rect = { Window.x = 0 ; y = 0 ; width = 400 ; height = 300 } in
+      let* r1 = Window.set_rect small_rect in
 
       let* r2 = Window.maximize in
       assert (r2.x >= 0) ;
@@ -234,9 +243,11 @@ module Make (Webdriver : Webdriver.S) = struct
 
       let* btn = find_first `css "input[type='submit']" in
       let* () = click btn in
-
-      let* url = current_url in
-      assert (url = url_b ^ "?foo=default+valuable") ;
+      let* () =
+        Wait.until
+          (let+ url = current_url in
+           url = url_b ^ "?foo=default+valuable")
+      in
 
       let* () = back in
       let* input = find_first `css "input[name='foo']" in
@@ -244,8 +255,11 @@ module Make (Webdriver : Webdriver.S) = struct
       let* () = send_keys input "again" in
       let* btn = find_first `css "input[type='submit']" in
       let* () = click btn in
-      let* url = current_url in
-      assert (url = url_b ^ "?foo=again") ;
+      let* () =
+        Wait.until
+          (let+ url = current_url in
+           url = url_b ^ "?foo=again")
+      in
 
       return ()
     end
@@ -343,8 +357,11 @@ module Make (Webdriver : Webdriver.S) = struct
           ]
       in
 
-      let* url = current_url in
-      assert (url = url_b ^ "?foo=testzy") ;
+      let* () =
+        Wait.until
+          (let+ url = current_url in
+           url = url_b ^ "?foo=testzy")
+      in
 
       return ()
     end
