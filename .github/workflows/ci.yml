@@ -36,6 +36,30 @@ jobs:
       - name: Build documentation
         run: opam exec -- dune build -p ${{ matrix.packages }} @doc
 
+      - name: Upload documentation
+        if: github.event_name == 'push' && matrix.ocaml-compiler == '5'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _build/default/_doc/_html
+
+  doc:
+    name: Publish documentation
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
   test:
     name: Test (${{ matrix.backend }}, ${{ matrix.browser }})
     runs-on: ubuntu-latest
